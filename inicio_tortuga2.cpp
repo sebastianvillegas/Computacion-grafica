@@ -7,6 +7,7 @@
 #include "GL/freeglut.h"
 #include "GL/gl.h"
 #include <iostream>
+#include "string.h"
 
 using namespace std;
 
@@ -21,9 +22,11 @@ float pz [10000];
 GLdouble mModel[16];
 
 bool axis = false;
+char strCommand[256];
+bool command = false;
 int dibujo = 0;
 
-GLfloat X = 1.0, Y = 10.0, Z = 1.0;
+GLfloat X = 2.0, Y = 2.0, Z = 0.0;
 
 // Dibujar una tortuga en 2D.
 
@@ -213,11 +216,58 @@ void reshape(int width, int height) {
     gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
+void parseCommand(char* strCommandParse) {
+    char *strToken0;
+    char *strToken1;
+    double val;
+    strToken0 = strtok(strCommandParse, " ");
+    while ((strToken1 = strtok(NULL," ")) != NULL) {
+        val = atof(strToken1);
+        if (!strcmp("fd",strToken0)) { // FORWARD
+            glTranslatef(0.0, 0.0, val);
+        } else if (!strcmp("bk",strToken0)) { // BACK
+            glTranslatef(0.0, 0.0, -val);
+        } else if (!strcmp("rt",strToken0)) { // RIGHT
+            glRotatef(-val,0.,1.,0.);
+        } else if (!strcmp("lt",strToken0)) { // LEFT
+            glRotatef(val,0.,1.,0.);
+        } else if (!strcmp("up",strToken0)) { // UP
+            glRotatef(val,1.,0.,0.);
+        } else if (!strcmp("dn",strToken0)) { // DOWN
+            glRotatef(-val,1.,0.,0.);
+        }
+        strToken0 = strtok(NULL, " ");
+        display();
+    }
+    // EXIT COMMAND MODE
+    if (strToken0 != NULL && strncmp(strToken0, "exit", 4) == 0) {
+        command = false;
+        // HOME
+    } else if (strToken0 != NULL && !strcmp("home",strToken0)) {
+        glLoadIdentity();
+    }
+}
+
 // Esta funcion es la encargada de la interación con el teclado.
 // Tambien se usara una funcion Callback pues en el programa se busca que la
 // libreria maneje todos los eventos.
 
 void keyboard(unsigned char key, int x, int y) {
+    
+    if (command) {
+        if (key == 13) {
+            strcat(strCommand, " ");
+            if (strlen(strCommand) == 1) command = false;
+            parseCommand(strCommand);
+            strcpy(strCommand, "");
+        } else {
+            char strKey[2] = " ";
+            strKey[0] = key;
+            printf(strKey);
+            strcat(strCommand, strKey);
+        }
+    }
+    else {
 
     // Se ejecuta un case distinto dependiendo de la tecla precionada.
     switch (key) {
@@ -310,6 +360,9 @@ void keyboard(unsigned char key, int x, int y) {
             glTranslatef(0.01, 0.0, 0.0);
             addPointToTrace();
             break;
+        case 'i':
+            command = true;
+            break;
 
         case 'q': 
         case 27:
@@ -318,6 +371,7 @@ void keyboard(unsigned char key, int x, int y) {
             break;
     }
 
+    }
     // Esta función da la indicación a la GLUT que es necesario redibujar la ventana.
     glutPostRedisplay();
 }
