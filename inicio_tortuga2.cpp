@@ -158,7 +158,7 @@ void display(void) {
 
     glPushMatrix();
     //glLoadIdentity();
-    glMultMatrixd(mModel);
+    //glMultMatrixd(mModel);
 
     if (dibujo == 0) {
 
@@ -174,7 +174,7 @@ void display(void) {
 
     glPopMatrix();
     //glGetDoublev(GL_MODELVIEW_MATRIX, mModel);
-    displayTrace();
+    //displayTrace();
 
     // Esta funcion define el intercambio entre los buffers posterios y anterior.
     glutSwapBuffers();
@@ -342,23 +342,6 @@ void keyboard(unsigned char key, int x, int y) {
             X += 0.1f;
             glLoadIdentity();
             gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-            break;
-        case 'f':
-            glTranslatef(0.0, 0.01, 0.0);
-            addPointToTrace();
-            break;
-            
-        case 'x':
-            glTranslatef(-0.01, 0.0, 0.0);
-            addPointToTrace();
-            break;
-        case 'v':
-            glTranslatef(0.0, -0.01, 0.0);
-            addPointToTrace();
-            break;
-        case 'b':
-            glTranslatef(0.01, 0.0, 0.0);
-            addPointToTrace();
             break;
         case 'i':
             command = true;
