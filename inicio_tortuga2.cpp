@@ -8,6 +8,8 @@
 #include "GL/gl.h"
 #include <iostream>
 #include "string.h"
+#include <unistd.h>
+
 
 using namespace std;
 
@@ -26,7 +28,7 @@ char strCommand[256];
 bool command = false;
 int dibujo = 0;
 
-GLfloat X = 2.0, Y = 2.0, Z = 0.0;
+GLfloat X = 5.0, Y = 4.0, Z = 0.0;
 
 // Dibujar una tortuga en 2D.
 
@@ -188,13 +190,13 @@ void reshape(int width, int height) {
     // Los primeros parametros indican la parte superior izquierda del "lienzo"
     // relativo a la ventana, en este caso es el origen. Los siguientes dos parametros
     // indican el alcho y el alto del "lienzo".
-    if (width < height) {
+    /*if (width < height) {*/
 
-        glViewport(0, 0, width, width);
-    } else {
+        glViewport(0, 0, width, height);
+    /*} else {
 
         glViewport(0, 0, height, height);
-    }
+    }*/
     // Se especifica la matriz de transformacion sobre la cual se trabajara,
     // en este caso se selecciona GL_PROJECTION afecta la prespectiva de proyección.
     glMatrixMode(GL_PROJECTION);
@@ -223,6 +225,7 @@ void parseCommand(char* strCommandParse) {
     strToken0 = strtok(strCommandParse, " ");
     while ((strToken1 = strtok(NULL," ")) != NULL) {
         val = atof(strToken1);
+        //usleep(100000);
         if (!strcmp("fd",strToken0)) { // FORWARD
             glTranslatef(0.0, 0.0, val);
         } else if (!strcmp("bk",strToken0)) { // BACK
@@ -383,7 +386,7 @@ int main(int argc, char** argv) {
     // GLUT_DOUBLE: Señala que se usara un doble buffer.
     glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
     // Se define el tamaño de la ventana, alto y ancho, en pixeles.
-    glutInitWindowSize(700, 700);
+    glutInitWindowSize(1000, 1000);
     // Posicion, relativo a la pantalla, donde se desplegara la ventana.
     glutInitWindowPosition(0, 0);
     // Se crea la ventana, el argumento es el titulo.
@@ -406,6 +409,24 @@ int main(int argc, char** argv) {
     glLoadIdentity();
     glGetDoublev(GL_MODELVIEW_MATRIX, mModel);
     glPopMatrix();
+    
+    freopen("in", "r", stdin);
+    char entrada[50000];
+    char caracter;
+    keyboard('n', 0, 0);
+    while(scanf("%c", &caracter)!=EOF){
+        char aux[2] = " ";
+        aux[0] = caracter;
+        strcat(entrada, aux);
+    }
+    
+    
+    parseCommand(entrada);
+    
+    
+    
+    
+
     glutMainLoop();
 
     return 0;
