@@ -10,38 +10,39 @@
 #include "string.h"
 #include <unistd.h>
 
-
 using namespace std;
-
+// Variables rastro
 //Numero de puntos
 int np = 0;
 //vectores para las coordenadas x, y, z.
 float px [10000];
 float py [10000];
 float pz [10000];
-
 //Matriz de modelado 
 GLdouble mModel[16];
 
+//Flag ejes
 bool axis = false;
+
+
 char strCommand[256];
 bool command = false;
 int dibujo = 0;
 
+//Variables Look At
 GLfloat X = 5.0, Y = 4.0, Z = 0.0;
 
 // Dibujar una tortuga en 2D.
-
 void drawTurtle(void) {
-
+    
     // Se define el estado del color, es decir, el color con que se va a pintar.
     // Se selecciona el color rojo.
     glColor3f(1.0, 0.0, 0.0);
     // Se definen las cordenadas.
     double x[] = {0.0, -0.1, -0.15, -0.35, -0.45, -0.4, -0.3, -0.4, -0.35, -0.2,
-        -0.35, -0.45, -0.35, -0.2, -0.15, -0.1, -0.1, -0.15, -0.2, -0.1, 0.0};
+    -0.35, -0.45, -0.35, -0.2, -0.15, -0.1, -0.1, -0.15, -0.2, -0.1, 0.0};
     double z[] = {-0.5, -0.55, -0.7, -0.75, -0.6, -0.45, -0.35, -0.2, 0.1, 0.25,
-        0.3, 0.5, 0.6, 0.55, 0.45, 0.45, 0.6, 0.7, 0.8, 0.9, 0.95};
+    0.3, 0.5, 0.6, 0.55, 0.45, 0.45, 0.6, 0.7, 0.8, 0.9, 0.95};
     // Se dibuja el contorno de la tortuga.
     glBegin(GL_LINE_LOOP);
     for (int i = 0; i < 21; i++) {
@@ -53,10 +54,10 @@ void drawTurtle(void) {
     glEnd();
 }
 
-// Dibujar toruga en 3D.
+// Dibujar tortuga en 3D.
 
 void drawSphereTurtle(void) {
-
+    
     // Se define el estado del color, es decir, el color con que se va a pintar.
     // Se selecciona el color azul.
     glColor3f(0.0, 0.0, 1.0);
@@ -87,13 +88,13 @@ void drawSphereTurtle(void) {
     glTranslatef(-0.35, 0.0, -0.35);
     glutWireSphere(0.13, 15, 15);
     glPopMatrix();
-
+    
 }
 
 // Dibujar ejes.
 
 void ejes(void) {
-
+    
     // Eje X.
     glColor3f(1.0, 0.0, 0.0);
     glBegin(GL_LINES);
@@ -114,6 +115,7 @@ void ejes(void) {
     glEnd();
 }
 
+//Anadir puntos para el rastro.
 void addPointToTrace() {
     int i;
     GLdouble m[16];
@@ -139,6 +141,7 @@ void addPointToTrace() {
     np++;
 }
 
+//Mostrar rastro
 void displayTrace() {
     int i;
     glColor3f(0.0, 0.0, 0.0);
@@ -152,51 +155,50 @@ void displayTrace() {
 // La funcion encargada de dibujar o redibujar la ventana cada vez que sea necesario.
 
 void display(void) {
-
+    
     // Se establece el color de fondo de la pantalla, en este caso color blanco.
     glClearColor(1.0, 1.0, 1.0, 0.0);
     // Se borra el fondo de la ventana, los parametros son los buffers que borrara.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
     glPushMatrix();
     //glLoadIdentity();
     //glMultMatrixd(mModel);
-
+    
     if (dibujo == 0) {
-
+        
         drawTurtle();
     } else if (dibujo == 1) {
-
+        
         drawSphereTurtle();
     }
     if (axis) {
-
+        
         ejes();
     }
-
+    
     glPopMatrix();
     //glGetDoublev(GL_MODELVIEW_MATRIX, mModel);
     //displayTrace();
-
+    
     // Esta funcion define el intercambio entre los buffers posterios y anterior.
     glutSwapBuffers();
 }
 
 // Definir el "area de proyección" de la ventana. Desde donde se mira el objeto.
-
 void reshape(int width, int height) {
-
+    
     // Se difine el espacio en la ventana donde se puede pintar.
     // Los primeros parametros indican la parte superior izquierda del "lienzo"
     // relativo a la ventana, en este caso es el origen. Los siguientes dos parametros
     // indican el alcho y el alto del "lienzo".
     /*if (width < height) {*/
-
-        glViewport(0, 0, width, height);
+    
+    glViewport(0, 0, width, height);
     /*} else {
-
-        glViewport(0, 0, height, height);
-    }*/
+     
+     glViewport(0, 0, height, height);
+     }*/
     // Se especifica la matriz de transformacion sobre la cual se trabajara,
     // en este caso se selecciona GL_PROJECTION afecta la prespectiva de proyección.
     glMatrixMode(GL_PROJECTION);
@@ -218,15 +220,42 @@ void reshape(int width, int height) {
     gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
+char * insideRepeat(char* strCommandInside) {
+    char *ini, *fin;
+    ini = strchr(strCommandInside, '[');
+    if (ini == NULL) return NULL;
+    ini++;
+    fin = strrchr(strCommandInside,']');
+    if (fin == NULL) return NULL;
+    strCommandInside[fin-strCommandInside]=0;
+    return ini;
+}
+
+//Función que lee los comandos
 void parseCommand(char* strCommandParse) {
     char *strToken0;
     char *strToken1;
     double val;
+    char *repeatCommand;
+    char *nextCommand;
+    char parseCommandInit[256];
+    int i;
     strToken0 = strtok(strCommandParse, " ");
     while ((strToken1 = strtok(NULL," ")) != NULL) {
         val = atof(strToken1);
         //usleep(100000);
-        if (!strcmp("fd",strToken0)) { // FORWARD
+        if (!strcmp("repeat",strToken0)) {
+            repeatCommand = insideRepeat(strToken1 + strlen(strToken1) + 1);
+            if (repeatCommand == NULL) return;
+            nextCommand = repeatCommand + strlen(repeatCommand) + 1;
+            for (i = 0; i < val; i++) {
+                strcpy (parseCommandInit, repeatCommand);
+                parseCommand(parseCommandInit);
+            }
+            strToken0 = strtok(nextCommand, " ");
+            if (strToken0 == NULL) continue;
+            continue;
+        } else if (!strcmp("fd",strToken0)) { // FORWARD
             glTranslatef(0.0, 0.0, val);
         } else if (!strcmp("bk",strToken0)) { // BACK
             glTranslatef(0.0, 0.0, -val);
@@ -271,103 +300,114 @@ void keyboard(unsigned char key, int x, int y) {
         }
     }
     else {
-
-    // Se ejecuta un case distinto dependiendo de la tecla precionada.
-    switch (key) {
-        case 'h':
-            // Imprime en la consola información de como interactuar con el programa.
-            printf("Help:\n");
-            printf("1. 'c' = Toggle culling.\n");
-            printf("2. 'q' or 'escape' = Quit.\n");
-            printf("3. 'a' = Axis, (Red = x, green = y and blue = z).\n");
-            printf("4. 'n' = Next figure (Switch Turtle 2D and Turtle 3D).\n");
-            printf("5. '1' = Rotate in x.\n");
-            printf("6. '2' = Rotate in y.\n");
-            printf("7. '3' = Rotate in z.\n");
-            printf("8. 'u' = + y.\n");
-            printf("9. 'd' = - y.\n");
-            printf("10. 'l' = - x.\n");
-            printf("11. 'r' = + x.\n");
-            break;
-        case 'a':
-            // Habilita o desabilita las ejes.
-            axis = !axis;
-            break;
-        case 'c':
-            // Habilita o desabilita las lineas posteriores.
-            if (glIsEnabled(GL_CULL_FACE)) {
-
-                glDisable(GL_CULL_FACE);
-            } else {
-
-                glEnable(GL_CULL_FACE);
-            }
-            break;
-            //
-        case 'n':
-            // Cambia el dibujo que se pintara.
-            if (dibujo == 1) {
-
-                dibujo = 0;
-            } else {
-
-                dibujo++;
-            }
-            break;
-        case '1':
-            // Rota en el eje x.
-            glRotatef(1.0, 1.0, 0.0, 0.0);
-            break;
-        case '2':
-            // Rota en el eje y.
-            glRotatef(1.0, 0.0, 1.0, 0.0);
-            break;
-        case '3':
-            // Rota en el eje z.
-            glRotatef(1.0, 0.0, 0.0, 1.0);
-            break;
-        case 'u':
-            Y += 0.1f;
-            glLoadIdentity();
-            gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-            break;
-        case 'd':
-            Y -= 0.1f;
-            glLoadIdentity();
-            gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-            break;
-        case 'l':
-            X -= 0.1f;
-            glLoadIdentity();
-            gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-            break;
-        case 'r':
-            X += 0.1f;
-            glLoadIdentity();
-            gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-            break;
-        case 'i':
-            command = true;
-            break;
-
-        case 'q': 
-        case 27:
-            // Sale de la aplicación.
-            exit(0);
-            break;
-    }
-
+        
+        // Se ejecuta un case distinto dependiendo de la tecla precionada.
+        switch (key) {
+            case 'h':
+                // Imprime en la consola información de como interactuar con el programa.
+                printf("Help:\n");
+                printf("1. 'c' = Toggle culling.\n");
+                printf("2. 'q' or 'escape' = Quit.\n");
+                printf("3. 'a' = Axis, (Red = x, green = y and blue = z).\n");
+                printf("4. 'n' = Next figure (Switch Turtle 2D and Turtle 3D).\n");
+                printf("5. '1' = Rotate in x.\n");
+                printf("6. '2' = Rotate in y.\n");
+                printf("7. '3' = Rotate in z.\n");
+                printf("8. 'u' = + y.\n");
+                printf("9. 'd' = - y.\n");
+                printf("10. 'l' = - x.\n");
+                printf("11. 'r' = + x.\n");
+                break;
+            case 'a':
+                // Habilita o desabilita las ejes.
+                axis = !axis;
+                break;
+            case 'c':
+                // Habilita o desabilita las lineas posteriores.
+                if (glIsEnabled(GL_CULL_FACE)) {
+                    
+                    glDisable(GL_CULL_FACE);
+                } else {
+                    
+                    glEnable(GL_CULL_FACE);
+                }
+                break;
+                //
+            case 'n':
+                // Cambia el dibujo que se pintara.
+                if (dibujo == 1) {
+                    
+                    dibujo = 0;
+                } else {
+                    
+                    dibujo++;
+                }
+                break;
+            case '1':
+                // Rota en el eje x.
+                glRotatef(1.0, 1.0, 0.0, 0.0);
+                break;
+            case '2':
+                // Rota en el eje y.
+                glRotatef(1.0, 0.0, 1.0, 0.0);
+                break;
+            case '3':
+                // Rota en el eje z.
+                glRotatef(1.0, 0.0, 0.0, 1.0);
+                break;
+            case 'u':
+                Y += 0.1f;
+                glLoadIdentity();
+                gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+                break;
+            case 'd':
+                Y -= 0.1f;
+                glLoadIdentity();
+                gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+                break;
+            case 'l':
+                X -= 0.1f;
+                glLoadIdentity();
+                gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+                break;
+            case 'r':
+                X += 0.1f;
+                glLoadIdentity();
+                gluLookAt(X, Y, Z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+                break;
+            case 'i':
+                command = true;
+                break;
+            case 'f': 
+                freopen("in", "r", stdin);
+                char entrada[50000];
+                char caracter;
+                while(scanf("%c", &caracter)!=EOF){
+                    char aux[2] = " ";
+                    aux[0] = caracter;
+                    strcat(entrada, aux);
+                }
+                parseCommand(entrada);
+                break;
+                
+            case 'q': 
+            case 27:
+                // Sale de la aplicación.
+                exit(0);
+                break;
+        }
+        
     }
     // Esta función da la indicación a la GLUT que es necesario redibujar la ventana.
     glutPostRedisplay();
 }
 
 int main(int argc, char** argv) {
-
+    
     // Inicializar la ventana GLUT, los parametros son los mismo la función main.
     glutInit(&argc, argv);
-
-
+    
+    
     printf("Help:\n");
     printf("1. 'c' = Toggle culling.\n");
     printf("2. 'q' or 'escape' = Quit.\n");
@@ -391,8 +431,8 @@ int main(int argc, char** argv) {
     glutInitWindowPosition(0, 0);
     // Se crea la ventana, el argumento es el titulo.
     glutCreateWindow("Tortuga");
-
-  
+    
+    
     // Las siguientes son funciones de tipo Callback, es decir, la libreria las ejecuta
     // su parametro, en este caso son funciones, cada vez que lo considere necesario.
     // Se ejecuta la funcion "display".
@@ -403,31 +443,13 @@ int main(int argc, char** argv) {
     glutReshapeFunc(reshape);
     // Esta funcion es la encargada de dar el control de flujo del programa a la libreria
     // para que esta pueda ejecutar las funciones Callback cada vez que ocurra un evento.
-
+    
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
     glGetDoublev(GL_MODELVIEW_MATRIX, mModel);
     glPopMatrix();
-    
-    freopen("in", "r", stdin);
-    char entrada[50000];
-    char caracter;
-    keyboard('n', 0, 0);
-    while(scanf("%c", &caracter)!=EOF){
-        char aux[2] = " ";
-        aux[0] = caracter;
-        strcat(entrada, aux);
-    }
-    
-    
-    parseCommand(entrada);
-    
-    
-    
-    
-
     glutMainLoop();
-
+    
     return 0;
 }
