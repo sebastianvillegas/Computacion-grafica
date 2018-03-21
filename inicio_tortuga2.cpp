@@ -23,11 +23,12 @@ GLdouble mModel[16];
 
 //Flag ejes
 bool axis = false;
-
+bool mostrarTortuga = true;
 
 char strCommand[256];
 bool command = false;
-int dibujo = 0;
+
+int dibujo = 1;
 
 //Variables Look At
 GLfloat X = 5.0, Y = 4.0, Z = 0.0;
@@ -60,13 +61,14 @@ void drawSphereTurtle(void) {
     
     // Se define el estado del color, es decir, el color con que se va a pintar.
     // Se selecciona el color azul.
-    glColor3f(0.0, 0.0, 1.0);
+    glColor3f(1.28, 0.68, 0.56);
     // Se dibuja el cuerpo.
     glPushMatrix();
     glTranslatef(0.0, 0.0, 0.0);
     glutWireSphere(0.4, 15, 15);
     glPopMatrix();
     // Se dibuja la cabeza.
+    glColor3f(0.7, 2.05, 0.7);
     glPushMatrix();
     glTranslatef(0.0, 0.0, 0.55);
     glutWireSphere(0.2, 15, 15);
@@ -165,13 +167,17 @@ void display(void) {
     //glLoadIdentity();
     //glMultMatrixd(mModel);
     
-    if (dibujo == 0) {
-        
-        drawTurtle();
-    } else if (dibujo == 1) {
-        
-        drawSphereTurtle();
+    
+    if (mostrarTortuga){
+        if (dibujo == 0) {
+            
+            drawTurtle();
+        } else if (dibujo == 1) {
+            
+            drawSphereTurtle();
+        }
     }
+    
     if (axis) {
         
         ejes();
@@ -241,10 +247,12 @@ void parseCommand(char* strCommandParse) {
     char parseCommandInit[256];
     int i;
     strToken0 = strtok(strCommandParse, " ");
+    
     while ((strToken1 = strtok(NULL," ")) != NULL) {
         val = atof(strToken1);
         //usleep(100000);
         if (!strcmp("repeat",strToken0)) {
+            
             repeatCommand = insideRepeat(strToken1 + strlen(strToken1) + 1);
             if (repeatCommand == NULL) return;
             nextCommand = repeatCommand + strlen(repeatCommand) + 1;
@@ -255,6 +263,16 @@ void parseCommand(char* strCommandParse) {
             strToken0 = strtok(nextCommand, " ");
             if (strToken0 == NULL) continue;
             continue;
+        } else if (!strcmp("load",strToken0)) { // FORWARD
+            freopen(strToken1, "r", stdin);
+            char entrada[50000];
+            char caracter;
+            while(scanf("%c", &caracter)!=EOF){
+                char aux[2] = " ";
+                aux[0] = caracter;
+                strcat(entrada, aux);
+            }
+            parseCommand(entrada);        
         } else if (!strcmp("fd",strToken0)) { // FORWARD
             glTranslatef(0.0, 0.0, val);
         } else if (!strcmp("bk",strToken0)) { // BACK
@@ -277,8 +295,13 @@ void parseCommand(char* strCommandParse) {
         // HOME
     } else if (strToken0 != NULL && !strcmp("home",strToken0)) {
         glLoadIdentity();
+    } else if (strToken0 != NULL && !strcmp("ht",strToken0)) { // FORWARD
+        mostrarTortuga = false;
+    } else if (strToken0 != NULL && !strcmp("st",strToken0)) { // FORWARD
+        mostrarTortuga = true;
     }
 }
+
 
 // Esta funcion es la encargada de la interación con el teclado.
 // Tambien se usara una funcion Callback pues en el programa se busca que la
@@ -317,6 +340,8 @@ void keyboard(unsigned char key, int x, int y) {
                 printf("9. 'd' = - y.\n");
                 printf("10. 'l' = - x.\n");
                 printf("11. 'r' = + x.\n");
+                printf("12. 'i' = Command mode.\n");
+                printf("13. 'f' = Ejecutar instrucciones para la circunferencia.\n");
                 break;
             case 'a':
                 // Habilita o desabilita las ejes.
@@ -406,8 +431,6 @@ int main(int argc, char** argv) {
     
     // Inicializar la ventana GLUT, los parametros son los mismo la función main.
     glutInit(&argc, argv);
-    
-    
     printf("Help:\n");
     printf("1. 'c' = Toggle culling.\n");
     printf("2. 'q' or 'escape' = Quit.\n");
@@ -420,6 +443,8 @@ int main(int argc, char** argv) {
     printf("9. 'd' = - y.\n");
     printf("10. 'l' = - x.\n");
     printf("11. 'r' = + x.\n");
+    printf("12. 'i' = Command mode.\n");
+    printf("13. 'f' = Ejecutar instrucciones para la circunferencia.\n");
     // Se define como se va a pintar en la ventana, los parametros son "Flags".
     // GLUT_RGB: Se usara el modelo Red-Green-Blue para definir el color.
     // GLUT_DEPTH: Indica que se usara el buffer de profundidad.
